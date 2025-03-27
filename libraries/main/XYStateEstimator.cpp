@@ -3,6 +3,8 @@
 #include "Printer.h"
 extern Printer printer;
 
+double pi = M_PI;
+
 inline float angleDiff(float a) {
   while (a<-PI) a += 2*PI;
   while (a> PI) a -= 2*PI;
@@ -32,9 +34,9 @@ void XYStateEstimator::updateState(imu_state_t * imu_state_p, gps_state_t * gps_
     ///////////////////////////////////////////////////////////////////
     // INSERT YAW, X and Y CALCULATION HERE
     //////////////////////////////////////////////////////////////////
-    state.x = RADIUS_OF_EARTH_M * (degToRad(gps_state_p->lon) - degToRad(origin_lon)) * cos(degToRad(gps_state_p->lat))
-    state.y = RADIUS_OF_EARTH_M * (degToRad(gps_state_p->lat) - degToRad(origin_lat))
-    state.yaw =      // to do
+    state.x = RADIUS_OF_EARTH_M * (pi/180*(gps_state_p->lon) - pi/180*(origin_lon)) * cos(pi/180*(gps_state_p->lat));
+    state.y = RADIUS_OF_EARTH_M * (pi/180*(gps_state_p->lat) - pi/180*(origin_lat));
+    //state.yaw =      // to do
   }
   else{
     gpsAcquired = 0;
