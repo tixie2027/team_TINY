@@ -39,7 +39,7 @@ void XYStateEstimator::updateState(imu_state_t * imu_state_p, gps_state_t * gps_
     
     float heading_rad = imu_state_p->heading*PI/180.0;
     float yaw_rad = -heading_rad + PI/2.0;
-    state.yaw = angleDiff(yaw_rad); // to do
+    state.yaw = angleDiff(yaw_rad);
   }
   else{
     gpsAcquired = 0;
