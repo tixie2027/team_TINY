@@ -65,9 +65,21 @@ void SurfaceControl::navigate(xy_state_t * state, gps_state_t * gps_state_p, int
     uR = uR*Kr;
     uL = uL*Kl;
 
+    if (uR > 127) {
+      uR = 127;
+    }
 
-
+    if (uL > 127) {
+      uL = 127;
+    }
     
+    if (uR < 0) {
+      uR = 0;
+    }
+
+    if (uL < 0) {
+      uL = 0;
+    }
   }
   else {
     gpsAcquired = 0;
