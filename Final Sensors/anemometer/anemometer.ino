@@ -14,14 +14,12 @@ double sampleTime = 1000; //how long to count number of rotations for one sample
 
 constexpr int N = 5; //number of samples to average across
 double sampleSet[N];
+int sampleIndex = 0;
 
 double RPS; //number of rotations per second
-int index = 0;
 
-const double anemometerConst = 0.1; // TO-DO: Go into wind tunnel to obtain anemometer constant to convert RPS to m/s
+const double anemometerConst = 20; // TO-DO: Go into wind tunnel to obtain anemometer constant to convert RPS to m/s
 double windSpeed;
-
-// TO-DO: Add sampling rate (Hz)
 
 
 void setup() {
@@ -33,12 +31,28 @@ void setup() {
 
 void loop() {
   //Program that runs continuously as long as arduino is working
+  currentTime = millis();
+  float timeDifference = currentTime - endTime;
+
+  if (timeDifference > sampleTime) {
+    // Convert time difference to RPS (Revolutions per second)
+    RPS = (revolution / sampleTime) * 1000;
+
+    // Store the RPS value in the history array (for running average)
+    sampleSet[sampleIndex] = RPS;
+    sampleIndex = (sampleIndex + 1) % N; // Loop back to the start when the array is full
+
+    endTime = currentTime;
+    revolution = 0; // Reset revolution count for next sample set
+  }
 
   // Calculate running average
   double avgRPS = calculateAverage(sampleSet, N);
   windSpeed = avgRPS * anemometerConst;
 
   // Print the current wind speed to the serial monitor
+  Serial.print("Average RPS (Hz): ");
+  Serial.println(avgRPS);
   Serial.print("Wind Speed (m/s): ");
   Serial.println(windSpeed);
 
@@ -48,24 +62,9 @@ void loop() {
 
 //ISR function: increments revolution count and prints to serial monitor
 void ISR(){ 
-  currentTime = millis();
-
   revolution += 1;
   Serial.print("Revolution count: ");
   Serial.println(revolution);
-  float timeDifference = currentTime - endTime;
-
-  if (timeDifference > sampleTime) {
-    // Convert time difference to RPS (Revolutions per second)
-    RPS = (revolution / sampleTime) * 1000;
-
-    // Store the RPS value in the history array (for running average)
-    RPSHistory[index] = RPS;
-    index = (index + 1) % N; // Loop back to the start when the array is full
-
-    endTime = currentTime;
-    revolution = 0; // Reset revolution count for next sample set
-  }
 }
 
 /*
@@ -75,7 +74,7 @@ void ISR(){
  * @param N The number of samples
  * @return The running average
  */
- double runningAverage(double sampleSet, int N) {
+ double calculateAverage(double sampleSet[], int N) {
     double sum = 0.0;
 
     for (int i = 0; i < N; i++) {
