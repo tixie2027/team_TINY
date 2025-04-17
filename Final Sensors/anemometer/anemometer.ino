@@ -4,7 +4,7 @@
 //and provide list of possible interrupt routines.
 #include <avr/interrupt.h>
 
-int hallSensor = 17; //connect hall effect sensor output to pin 17 or pin corresponding to A3
+int hallSensor = 15; //connect hall effect sensor output to pin 17 or pin corresponding to A1
 int revolution = 0; //initialize revolution count
 
 double endTime = 0; //time of last rotation
@@ -51,10 +51,12 @@ void loop() {
   windSpeed = avgRPS * anemometerConst;
 
   // Print the current wind speed to the serial monitor
+  Serial.print(sampleSet[1]);
   Serial.print("Average RPS (Hz): ");
   Serial.println(avgRPS);
   Serial.print("Wind Speed (m/s): ");
   Serial.println(windSpeed);
+
 
   // Wait for 1 second before printing again
   delay(1000);
