@@ -4,7 +4,7 @@
 clear;
 %clf;
 
-filenum = '003'; % file number for the data you want to read
+filenum = '105'; % file number for the data you want to read
 infofile = strcat('INF', filenum, '.TXT');
 datafile = strcat('LOG', filenum, '.BIN');
 
@@ -44,13 +44,37 @@ for i=1:numel(varTypes)
     eval(strcat(varNames{i},'=','R{',num2str(i),'};'));
 end
 fclose(fid);
-
+sampRate = 10;
 %% Process your data here
-plot(accelY)
-mean(accelY)
-xlabel('Sample number')
-ylabel('Teensy unit')
+
+t = linspace(0, 3018/sampRate, 3018)';
+figure
+plot(t,A02)
+% xlim([15 40])
+% ylim([0 1200])
+% figure
+% plot(A02)
+% ylim([0 1200])
+% xlabel('Sample number')
+% ylabel('Teensy unit')
+% title(['y-acceleration vs time'])
+
+revolutionTimes = [];
+
+for i = 2:length(A02)
+    if A02(i) == 1023 && A02(i-1) == 0
+        revolutionTimes(end+1) = t(i);
+    end
+end
+
+windowSize = 25;
+deltaT = diff(revolutionTimes);
+rps = 1./deltaT;
+rollingRPS = movmean(rps, windowSize);
+rollingT = revolutionTimes(2:end) - deltaT / 2;
+
+figure
+plot(rollingT,rollingRPS)
+xlabel('Time (s)')
+ylabel('RPS (Hz)')
 title(['y-acceleration vs time'])
-xlim([0 370]);
-mean(accelY)
-mean(accelZ)

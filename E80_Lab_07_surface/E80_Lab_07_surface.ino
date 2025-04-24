@@ -74,7 +74,7 @@ void setup() {
   int navigateDelay = 0; // how long robot will stay at surface waypoint before continuing (ms)
 
   const int num_surface_waypoints = 3; // Set to 0 if only doing depth control
-  double surface_waypoints [] = { 125, -40, 150, -40, 125, -40 };   // listed as x0,y0,x1,y1, ... etc.
+  double surface_waypoints [] = { 20, 0, 40, 0, 10, 0 };   // listed as x0,y0,x1,y1, ... etc.
   surface_control.init(num_surface_waypoints, surface_waypoints, navigateDelay);
   
   xy_state_estimator.init(); 
@@ -98,7 +98,14 @@ void setup() {
 
 void loop() {
   currentTime=millis();
-    
+  int therm_air = analogRead(14);
+  int therm_water = analogRead(15);
+  int aneno = digitalRead(16);
+  int vane = analogRead(17);  
+  String combined = "therm_water: " + String(therm_water) + " / therm_air: " + String(therm_air);
+
+
+
   if ( currentTime-printer.lastExecutionTime > LOOP_PERIOD ) {
     printer.lastExecutionTime = currentTime;
     printer.printValue(0,adc.printSample());
@@ -111,6 +118,9 @@ void loop() {
     printer.printValue(7,motor_driver.printState());
     printer.printValue(8,imu.printRollPitchHeading());        
     printer.printValue(9,imu.printAccels());
+    printer.printValue(10, combined);    //thermistor
+    printer.printValue(11, vane);
+    printer.printValue(12, aneno);      // weather vane
     printer.printToSerial();  // To stop printing, just comment this line out
   }
 

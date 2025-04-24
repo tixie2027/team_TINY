@@ -78,7 +78,7 @@ void loop() {
     motorDriver.drive(0,-120,0);
 
   } else if (currentTime > 25000 && currentTime <32000) {
-    motorDriver.drive(120, 0 ,120);
+    motorDriver.drive(120, 0 ,0);
  
   } else if (currentTime > 32000 && currentTime <37000) {
     motorDriver.drive(0,120,0);
