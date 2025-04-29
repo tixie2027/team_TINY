@@ -4,7 +4,7 @@
 clear;
 %clf;
 
-filenum = '019'; % file number for the data you want to read
+filenum = '016'; % file number for the data you want to read
 infofile = strcat('INF', filenum, '.TXT');
 datafile = strcat('LOG', filenum, '.BIN');
 
@@ -85,8 +85,8 @@ xlabel('Time (s)', FontSize = AxisSize)
 ylabel('Wind Speed (m/s)', FontSize = AxisSize)
 title('Wind Speed (m/s) vs Time (s)', FontSize = TitleSize)
 
-filename = "windTunnel.mat";
-save(filename, 'A02', 't')
+% filename = "windTunnel.mat";
+% save(filename, 'A02', 't')
 
 slope = (3.0-0.3)/(1023-0);
 intercept = 3.0 - 1023*slope;
@@ -162,7 +162,7 @@ figure
 plot(t,T2, LineWidth = 1.5)
 hold on
 plot(t,T1, LineWidth = 1.5)
-xlim([100 250])
+% xlim([100 250])
 title('Converted Temperature Data (°C) vs. Time (s)', FontSize=TitleSize)
 xlabel('Time (s)', FontSize=AxisSize)
 ylabel('Temperature (°C)', FontSize=AxisSize)
