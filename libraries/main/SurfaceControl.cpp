@@ -15,7 +15,7 @@ SurfaceControl::SurfaceControl(void)
 void SurfaceControl::init(const int totalWayPoints_in, double * wayPoints_in, int navigateDelay_in) {
   totalWayPoints = totalWayPoints_in;
   // create wayPoints array on the Heap so that it isn't erased once the main Arduino loop starts
-  wayPoints = new double[totalWayPoints];
+  wayPoints = new double[2*totalWayPoints];
   for (int i=0; i<totalWayPoints; i++) { 
     wayPoints[i] = wayPoints_in[i];
   }

@@ -4,7 +4,7 @@
 clear;
 %clf;
 
-filenum = '105'; % file number for the data you want to read
+filenum = '019'; % file number for the data you want to read
 infofile = strcat('INF', filenum, '.TXT');
 datafile = strcat('LOG', filenum, '.BIN');
 
@@ -44,20 +44,18 @@ for i=1:numel(varTypes)
     eval(strcat(varNames{i},'=','R{',num2str(i),'};'));
 end
 fclose(fid);
-sampRate = 10;
+sampT = 99*10^-3;
+sampRate = 1/sampT;
+
 %% Process your data here
 
-t = linspace(0, 3018/sampRate, 3018)';
+TitleSize = 16;
+AxisSize = 14;
+
+t = linspace(0, size(A02,1)/sampRate, size(A02,1))';
+
 figure
-plot(t,A02)
-% xlim([15 40])
-% ylim([0 1200])
-% figure
-% plot(A02)
-% ylim([0 1200])
-% xlabel('Sample number')
-% ylabel('Teensy unit')
-% title(['y-acceleration vs time'])
+plot(A02)
 
 revolutionTimes = [];
 
@@ -67,14 +65,115 @@ for i = 2:length(A02)
     end
 end
 
-windowSize = 25;
+windowSize = 15;
 deltaT = diff(revolutionTimes);
 rps = 1./deltaT;
 rollingRPS = movmean(rps, windowSize);
 rollingT = revolutionTimes(2:end) - deltaT / 2;
 
 figure
-plot(rollingT,rollingRPS)
-xlabel('Time (s)')
-ylabel('RPS (Hz)')
-title(['y-acceleration vs time'])
+plot(rollingT,rollingRPS, LineWidth = 1.5)
+xlabel('Time (s)', FontSize = AxisSize)
+ylabel('RPS (Hz)', FontSize = AxisSize)
+title('RPS (Hz) vs Time (s)', FontSize = TitleSize)
+
+windSpeed = rollingRPS.*2.34+0.453;
+
+figure
+plot(rollingT,windSpeed, LineWidth=1.5)
+xlabel('Time (s)', FontSize = AxisSize)
+ylabel('Wind Speed (m/s)', FontSize = AxisSize)
+title('Wind Speed (m/s) vs Time (s)', FontSize = TitleSize)
+
+filename = "windTunnel.mat";
+save(filename, 'A02', 't')
+
+slope = (3.0-0.3)/(1023-0);
+intercept = 3.0 - 1023*slope;
+
+A00 = double(A00);
+A01 = double(A01);
+
+cutoffFrequency = sampRate/100; 
+
+temp1Filtered = lowpass(double(A00), cutoffFrequency, sampRate);
+temp2Filtered = lowpass(double(A01), cutoffFrequency, sampRate);
+
+temp1VFiltered = temp1Filtered*slope + intercept;
+temp2VFiltered = temp2Filtered*slope + intercept;
+
+temp1V = A00*slope + intercept;
+temp2V = A01*slope + intercept;
+
+
+R2 = 47;
+Rf = 3;
+Rn = 1; 
+Rg = 10;
+Rp = 15;
+
+rCalculate = @(V) ((Rg*Rn*(-5 + V) + Rp*(5*Rf + Rn*V))*R2)/(5*Rf*Rg - Rn*(Rg*(-5 + V) + Rp*V));
+    % tempCalculate
+
+
+A1 = 0.001613;
+B1 = 0.0008417;
+C1 = -0.0001501;
+D1 = 1.277e-05;
+
+tCalculate1 = @(R) 1/(A1+B1*log(R)+C1*(log(R)^2)+D1*(log(R)^3));
+
+% f4 = 
+% 
+%      General model:
+%      f4(R) = 1/(a+b*log(R)+c*(log(R)^2)+d*(log(R)^3))
+%      Coefficients (with 95% confidence bounds):
+%        a =    0.001613  (-0.005507, 0.008732)
+%        b =   0.0008417  (-0.004255, 0.005938)
+%        c =  -0.0001501  (-0.001364, 0.001064)
+%        d =   1.277e-05  (-8.362e-05, 0.0001092)
+
+
+A2 = 0.001613;
+B2 = 0.0008417;
+C2 = -0.0001501;
+D2 = 1.277e-05;
+
+% f4 = 
+% 
+%      General model:
+%      f4(R) = 1/(a+b*log(R)+c*(log(R)^2)+d*(log(R)^3))
+%      Coefficients (with 95% confidence bounds):
+%        a =    0.002966  (-0.003358, 0.00929)
+%        b =  -0.0001104  (-0.00464, 0.00442)
+%        c =   7.385e-05  (-0.001006, 0.001153)
+%        d =  -4.871e-06  (-9.042e-05, 8.068e-05)
+
+tCalculate2 = @(R) 1/(A2+B2*log(R)+C2*(log(R)^2)+D2*(log(R)^3));
+
+R1 = arrayfun(@(V) rCalculate(V), temp1VFiltered);
+T1 = arrayfun(@(R) tCalculate1(R), R1)-273.15;
+
+R2 = arrayfun(@(V) rCalculate(V), temp2VFiltered);
+T2 = arrayfun(@(R) tCalculate2(R), R2)-273.15;
+
+
+figure
+plot(t,T2, LineWidth = 1.5)
+hold on
+plot(t,T1, LineWidth = 1.5)
+xlim([100 250])
+title('Converted Temperature Data (°C) vs. Time (s)', FontSize=TitleSize)
+xlabel('Time (s)', FontSize=AxisSize)
+ylabel('Temperature (°C)', FontSize=AxisSize)
+legend('Water', 'Air')
+
+% figure
+% plot(t,T2)
+% hold on
+% % plot(t, temp2V)
+% title(['Thermistor 2'])
+
+figure
+plot(t,A03, LineWidth = 1.5)
+title(['Weather Vane'])
