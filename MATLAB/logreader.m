@@ -4,7 +4,7 @@
 clear;
 %clf;
 
-filenum = '016'; % file number for the data you want to read
+filenum = '019'; % file number for the data you want to read
 infofile = strcat('INF', filenum, '.TXT');
 datafile = strcat('LOG', filenum, '.BIN');
 
@@ -51,11 +51,12 @@ sampRate = 1/sampT;
 
 TitleSize = 16;
 AxisSize = 14;
+Width = 1.5;
 
 t = linspace(0, size(A02,1)/sampRate, size(A02,1))';
 
-figure
-plot(A02)
+% figure
+% plot(A02)
 
 revolutionTimes = [];
 
@@ -71,11 +72,11 @@ rps = 1./deltaT;
 rollingRPS = movmean(rps, windowSize);
 rollingT = revolutionTimes(2:end) - deltaT / 2;
 
-figure
-plot(rollingT,rollingRPS, LineWidth = 1.5)
-xlabel('Time (s)', FontSize = AxisSize)
-ylabel('RPS (Hz)', FontSize = AxisSize)
-title('RPS (Hz) vs Time (s)', FontSize = TitleSize)
+% figure
+% plot(rollingT,rollingRPS, LineWidth = Width)
+% xlabel('Time (s)', FontSize = AxisSize)
+% ylabel('RPS (Hz)', FontSize = AxisSize)
+% title('RPS (Hz) vs Time (s)', FontSize = TitleSize)
 
 % Slope
 beta1 = 2.3364;
@@ -97,11 +98,12 @@ lambdaWindSpeedUncertainty = sqrt( ...
 figure
 plot(rollingT,windSpeed, LineWidth=1.5)
 hold on
-plot(rollingT,windSpeed+lambdaWindSpeedUncertainty, '-.b', LineWidth=1.5)
-plot(rollingT,windSpeed-lambdaWindSpeedUncertainty, '--m', LineWidth=1.5)
+plot(rollingT,windSpeed+lambdaWindSpeedUncertainty, '-.', LineWidth=1.5)
+plot(rollingT,windSpeed-lambdaWindSpeedUncertainty, '--', LineWidth=1.5)
 xlabel('Time (s)', FontSize = AxisSize)
 ylabel('Wind Speed (m/s)', FontSize = AxisSize)
 title('Wind Speed (m/s) vs Time (s)', FontSize = TitleSize)
+    legend('Measured', 'Upper Bound', 'Lower Bound')
 
 % filename = "windTunnel.mat";
 % save(filename, 'A02', 't')
@@ -228,9 +230,9 @@ end
 
 figure
 hold on
-plot(t,T1, LineWidth = 1.5)
-plot(t,T1+lambdaT1', '-.b', LineWidth = 1.5)
-plot(t,T1-lambdaT1', '--m', LineWidth = 1.5)
+plot(t,T1, LineWidth = Width)
+plot(t,T1+lambdaT1', '-.', LineWidth = Width, Color = "#D95319")
+plot(t,T1-lambdaT1', '--', LineWidth = Width, Color = "#EDB120")
 
 title('Converted Temperature Data (°C) vs. Time (s) - Air', FontSize=TitleSize)
 xlabel('Time (s)', FontSize=AxisSize)
@@ -239,9 +241,9 @@ legend('Measured', 'Upper Bound', 'Lower Bound')
 
 figure
 hold on
-plot(t,T2, LineWidth = 1.5)
-plot(t,T2+lambdaT2', '-.b', LineWidth = 1.5)
-plot(t,T2-lambdaT2', '--m', LineWidth = 1.5)
+plot(t,T2, LineWidth = Width)
+plot(t,T2+lambdaT2', '-.', LineWidth = Width)
+plot(t,T2-lambdaT2', '--', LineWidth = Width)
 
 title('Converted Temperature Data (°C) vs. Time (s) - Water', FontSize=TitleSize)
 xlabel('Time (s)', FontSize=AxisSize)
@@ -249,5 +251,5 @@ ylabel('Temperature (°C)', FontSize=AxisSize)
 legend('Measured', 'Upper Bound', 'Lower Bound')
 
 figure
-plot(t,A03, LineWidth = 1.5)
+plot(t,A03, LineWidth = Width)
 title(['Weather Vane'])
