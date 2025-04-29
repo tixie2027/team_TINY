@@ -77,10 +77,28 @@ xlabel('Time (s)', FontSize = AxisSize)
 ylabel('RPS (Hz)', FontSize = AxisSize)
 title('RPS (Hz) vs Time (s)', FontSize = TitleSize)
 
-windSpeed = rollingRPS.*2.34+0.453;
+% Slope
+beta1 = 2.3364;
+% Y-intercet
+beta0 = 0.4529;
+
+% Uncertainty in slope
+lambdaBeta1 = 0.2561;
+
+% Uncertainty in intercept
+lambdaBeta0 = 0.2819;
+
+windSpeed = rollingRPS.*beta1 + beta0;
+
+lambdaWindSpeedUncertainty = sqrt( ...
+    (rollingRPS .* lambdaBeta1).^2 + ... % from slope
+    lambdaBeta0^2);               % from intercept
 
 figure
 plot(rollingT,windSpeed, LineWidth=1.5)
+hold on
+plot(rollingT,windSpeed+lambdaWindSpeedUncertainty, '-.b', LineWidth=1.5)
+plot(rollingT,windSpeed-lambdaWindSpeedUncertainty, '--m', LineWidth=1.5)
 xlabel('Time (s)', FontSize = AxisSize)
 ylabel('Wind Speed (m/s)', FontSize = AxisSize)
 title('Wind Speed (m/s) vs Time (s)', FontSize = TitleSize)
@@ -105,23 +123,26 @@ temp2VFiltered = temp2Filtered*slope + intercept;
 temp1V = A00*slope + intercept;
 temp2V = A01*slope + intercept;
 
-
-R2 = 47;
+Rd = 47;
 Rf = 3;
 Rn = 1; 
 Rg = 10;
 Rp = 15;
+lambdaV = 0.0048;
 
-rCalculate = @(V) ((Rg*Rn*(-5 + V) + Rp*(5*Rf + Rn*V))*R2)/(5*Rf*Rg - Rn*(Rg*(-5 + V) + Rp*V));
+% rCalculate = @(V) ((Rg*Rn*(-5 + V) + Rp*(5*Rf + Rn*V))*R2)/(5*Rf*Rg - Rn*(Rg*(-5 + V) + Rp*V));
     % tempCalculate
 
+% Incase of calculating temperature using Steinhart-Hart coefficients
 
-A1 = 0.001613;
-B1 = 0.0008417;
-C1 = -0.0001501;
-D1 = 1.277e-05;
-
-tCalculate1 = @(R) 1/(A1+B1*log(R)+C1*(log(R)^2)+D1*(log(R)^3));
+% A1 = 0.001613;
+% B1 = 0.0008417;
+% C1 = -0.0001501;
+% D1 = 1.277e-05;
+% lambdaA1 = (0.008732+0.005507)/2;
+% lambdaB1 = (0.005938+0.004255)/2;
+% lambdaC1 = (0.001064+0.001364)/2;
+% lambdaD1 = (0.0001092+8.362e-05)/2;
 
 % f4 = 
 % 
@@ -134,10 +155,14 @@ tCalculate1 = @(R) 1/(A1+B1*log(R)+C1*(log(R)^2)+D1*(log(R)^3));
 %        d =   1.277e-05  (-8.362e-05, 0.0001092)
 
 
-A2 = 0.001613;
-B2 = 0.0008417;
-C2 = -0.0001501;
-D2 = 1.277e-05;
+% A2 = 0.001613;
+% B2 = 0.0008417;
+% C2 = -0.0001501;
+% D2 = 1.277e-05;
+% lambdaA2 = (0.00929+0.003358)/2;
+% lambdaB2 = (0.00442+0.00464)/2;
+% lambdaC2 = (0.001153+0.001006)/2;
+% lambdaD2 = (8.068e-05+9.042e-05)/2;
 
 % f4 = 
 % 
@@ -149,30 +174,79 @@ D2 = 1.277e-05;
 %        c =   7.385e-05  (-0.001006, 0.001153)
 %        d =  -4.871e-06  (-9.042e-05, 8.068e-05)
 
-tCalculate2 = @(R) 1/(A2+B2*log(R)+C2*(log(R)^2)+D2*(log(R)^3));
+% tCalculate2 = @(R) 1/(A2+B2*log(R)+C2*(log(R)^2)+D2*(log(R)^3));
+% tCalculate1 = @(R) 1/(A1+B1*log(R)+C1*(log(R)^2)+D1*(log(R)^3));
 
-R1 = arrayfun(@(V) rCalculate(V), temp1VFiltered);
-T1 = arrayfun(@(R) tCalculate1(R), R1)-273.15;
+R0 = 47;
+B = 4050;
+lambdaR0 = R0*0.01;
+lambdaB = B*0.01;
+T0 = 25+ 273.15;
 
-R2 = arrayfun(@(V) rCalculate(V), temp2VFiltered);
-T2 = arrayfun(@(R) tCalculate2(R), R2)-273.15;
+R1 = arrayfun(@(V) rCalculate(V, Rg, Rn, Rp, Rf, Rd), temp1VFiltered);
 
+for i = 1:length(R1)
+       lambdaR1(i) = propagateRUncertainty(temp1VFiltered(i), Rg, Rn, Rp, Rf, Rd); 
+end
+
+% Steinhart-hart method
+% T1 = arrayfun(@(R) tCalculate(A1, B1, C1, D1, R), R1)-273.15;
+
+% Simple
+T1 = arrayfun(@(R) tCalculate(B, T0, R0, R), R1)-273.15;
+
+for i = 1:length(T1)
+       % Steinhart-hart method
+       % lambdaT1(i) = propagateTUncertainty(A1, B1, C1, D1, R1(i), ...
+       %     lambdaA1, lambdaB1, lambdaC1, lambdaD1, lambdaR1(i));
+
+       % Simple equation
+       lambdaT1(i) = propagateTUncertainty(B, R0, T0, R1(i), lambdaB, lambdaR0, lambdaR1(i));
+end
+
+
+R2 = arrayfun(@(V) rCalculate(V, Rg, Rn, Rp, Rf, Rd), temp2VFiltered);
+
+for i = 1:length(R2)
+       lambdaR2(i) = propagateRUncertainty(temp2VFiltered(i), Rg, Rn, Rp, Rf, Rd); 
+end
+
+% Steinhart-hart method
+% T1 = arrayfun(@(R) tCalculate(A1, B1, C1, D1, R), R1)-273.15;
+
+% Simple
+T2 = arrayfun(@(R) tCalculate(B, T0, R0, R), R2)-273.15;
+
+for i = 1:length(T2)
+       % Steinhart-hart method
+       % lambdaT1(i) = propagateTUncertainty(A1, B1, C1, D1, R1(i), ...
+       %     lambdaA1, lambdaB1, lambdaC1, lambdaD1, lambdaR1(i));
+
+       % Simple equation
+       lambdaT2(i) = propagateTUncertainty(B, R0, T0, R2(i), lambdaB, lambdaR0, lambdaR2(i));
+end
 
 figure
-plot(t,T2, LineWidth = 1.5)
 hold on
 plot(t,T1, LineWidth = 1.5)
-% xlim([100 250])
-title('Converted Temperature Data (°C) vs. Time (s)', FontSize=TitleSize)
+plot(t,T1+lambdaT1', '-.b', LineWidth = 1.5)
+plot(t,T1-lambdaT1', '--m', LineWidth = 1.5)
+
+title('Converted Temperature Data (°C) vs. Time (s) - Air', FontSize=TitleSize)
 xlabel('Time (s)', FontSize=AxisSize)
 ylabel('Temperature (°C)', FontSize=AxisSize)
-legend('Water', 'Air')
+legend('Measured', 'Upper Bound', 'Lower Bound')
 
-% figure
-% plot(t,T2)
-% hold on
-% % plot(t, temp2V)
-% title(['Thermistor 2'])
+figure
+hold on
+plot(t,T2, LineWidth = 1.5)
+plot(t,T2+lambdaT2', '-.b', LineWidth = 1.5)
+plot(t,T2-lambdaT2', '--m', LineWidth = 1.5)
+
+title('Converted Temperature Data (°C) vs. Time (s) - Water', FontSize=TitleSize)
+xlabel('Time (s)', FontSize=AxisSize)
+ylabel('Temperature (°C)', FontSize=AxisSize)
+legend('Measured', 'Upper Bound', 'Lower Bound')
 
 figure
 plot(t,A03, LineWidth = 1.5)
