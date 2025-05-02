@@ -4,7 +4,7 @@
 clear;
 %clf;
 
-filenum = '016'; % file number for the data you want to read
+filenum = '018'; % file number for the data you want to read
 infofile = strcat('INF', filenum, '.TXT');
 datafile = strcat('LOG', filenum, '.BIN');
 
@@ -109,7 +109,12 @@ shade(rollingT,windSpeed+lambdaWindSpeedUncertainty,'--w', ...
 xlabel('Time (s)', FontSize = AxisSize)
 ylabel('Wind Speed (m/s)', FontSize = AxisSize)
 title('Wind Speed (m/s) vs Time (s)', FontSize = TitleSize)
-    legend('Measured', 'Upper Bound', 'Lower Bound')
+yline(5.8,'-',LineWidth=Width+0.5, DisplayName='Approximate "Ground Truth" Measurement of 5.8 m/s', Color="Red");
+legend('Measured Wind Speed', ...
+        '', ...
+        '', ...
+        'Error Bounds on Measured Wind Speed', ...
+        'Approximate ""Ground Truth"" Measurement of 5.8 m/s', FontSize=AxisSize-2)
 
 % filename = "windTunnel.mat";
 % save(filename, 'A02', 't')
@@ -229,6 +234,8 @@ end
 % Simple
 T2 = arrayfun(@(R) tCalculate(B, T0, R0, R), R2)-273.15;
 
+tCalculate(B, T0, R0, 96.52034468)-273.15
+
 for i = 1:length(T2)
        % Steinhart-hart method
        % lambdaT1(i) = propagateTUncertainty(A1, B1, C1, D1, R1(i), ...
@@ -258,9 +265,15 @@ shade(t,T1+lambdaT1','--w', ...
       'FillAlpha',0.2, ...
       'FillColor', [0 0.4470 0.7410])
 title('Converted Temperature Data (°C) vs. Time (s) - Air', FontSize=TitleSize)
+yline(15.1,'-',LineWidth=Width+0.5, DisplayName="Ground Truth Measurement of 15.2°C", Color="Red");
 xlabel('Time (s)', FontSize=AxisSize)
 ylabel('Temperature (°C)', FontSize=AxisSize)
-legend('Measured', 'Error Bounds')
+legend('Measured Temperature', ...
+        '', ...
+        '', ...
+        'Error Bounds on Measured Temperature', ...
+        'Ground Truth Measurement of 15.2°C', FontSize=AxisSize-2)
+xlim([28 360])
 
 figure
 hold on
@@ -272,10 +285,16 @@ shade(t,T2+lambdaT2','--w', ...
       'FillAlpha',0.2, ...
       'FillColor', [0 0.4470 0.7410])
 title('Converted Temperature Data (°C) vs. Time (s) - Water', FontSize=TitleSize)
+yline(16.0,'-',LineWidth=Width+0.5, DisplayName="Ground Truth Measurement of 16.0°C", Color = "Red");
 xlabel('Time (s)', FontSize=AxisSize)
 ylabel('Temperature (°C)', FontSize=AxisSize)
-legend('Measured', 'Upper Bound', 'Lower Bound')
+xlim([28 360])
+legend('Measured Temperature', ...
+        '', ...
+        '', ...
+        'Error Bounds on Measured Temperature', ...
+        'Ground Truth Measurement of 16.0°C', FontSize=AxisSize-2)
 
 figure
-plot(t,A03, LineWidth = Width)
+    plot(t,A03, LineWidth = Width)
 title('Weather Vane')
