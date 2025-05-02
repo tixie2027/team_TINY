@@ -4,7 +4,7 @@
 clear;
 %clf;
 
-filenum = '019'; % file number for the data you want to read
+filenum = '016'; % file number for the data you want to read
 infofile = strcat('INF', filenum, '.TXT');
 datafile = strcat('LOG', filenum, '.BIN');
 
@@ -98,8 +98,14 @@ lambdaWindSpeedUncertainty = sqrt( ...
 figure
 plot(rollingT,windSpeed, LineWidth=1.5)
 hold on
-plot(rollingT,windSpeed+lambdaWindSpeedUncertainty, '-.', LineWidth=1.5)
-plot(rollingT,windSpeed-lambdaWindSpeedUncertainty, '--', LineWidth=1.5)
+shade(rollingT,windSpeed+lambdaWindSpeedUncertainty,'--w', ...
+      rollingT,windSpeed-lambdaWindSpeedUncertainty,'--w', ...
+      'FillType', [1 2;2 1], ...
+      'LineWidth',0.01, ...
+      'FillAlpha',0.2, ...
+      'FillColor', [0 0.4470 0.7410])
+% plot(rollingT,windSpeed+lambdaWindSpeedUncertainty, '-.', LineWidth=1.5)
+% plot(rollingT,windSpeed-lambdaWindSpeedUncertainty, '--', LineWidth=1.5)
 xlabel('Time (s)', FontSize = AxisSize)
 ylabel('Wind Speed (m/s)', FontSize = AxisSize)
 title('Wind Speed (m/s) vs Time (s)', FontSize = TitleSize)
@@ -124,13 +130,6 @@ temp2VFiltered = temp2Filtered*slope + intercept;
 
 temp1V = A00*slope + intercept;
 temp2V = A01*slope + intercept;
-
-Rd = 47;
-Rf = 3;
-Rn = 1; 
-Rg = 10;
-Rp = 15;
-lambdaV = 0.0048;
 
 % rCalculate = @(V) ((Rg*Rn*(-5 + V) + Rp*(5*Rf + Rn*V))*R2)/(5*Rf*Rg - Rn*(Rg*(-5 + V) + Rp*V));
     % tempCalculate
@@ -185,10 +184,16 @@ lambdaR0 = R0*0.01;
 lambdaB = B*0.01;
 T0 = 25+ 273.15;
 
-R1 = arrayfun(@(V) rCalculate(V, Rg, Rn, Rp, Rf, Rd), temp1VFiltered);
+Rd1 = 46.92;
+Rf1 = 2.960;
+Rn1 = 0.990; 
+Rg1 = 9.8;
+Rp1 = 15.05;
+
+R1 = arrayfun(@(V) rCalculate(V, Rg1, Rn1, Rp1, Rf1, Rd1), temp1VFiltered);
 
 for i = 1:length(R1)
-       lambdaR1(i) = propagateRUncertainty(temp1VFiltered(i), Rg, Rn, Rp, Rf, Rd); 
+       lambdaR1(i) = propagateRUncertainty(temp1VFiltered(i), Rg1, Rn1, Rp1, Rf1, Rd1); 
 end
 
 % Steinhart-hart method
@@ -206,11 +211,16 @@ for i = 1:length(T1)
        lambdaT1(i) = propagateTUncertainty(B, R0, T0, R1(i), lambdaB, lambdaR0, lambdaR1(i));
 end
 
+Rd2 = 46.92;
+Rf2 = 2.960;
+Rn2 = 0.990; 
+Rg2 = 9.8;
+Rp2 = 15.05;
 
-R2 = arrayfun(@(V) rCalculate(V, Rg, Rn, Rp, Rf, Rd), temp2VFiltered);
+R2 = arrayfun(@(V) rCalculate(V, Rg2, Rn2, Rp2, Rf2, Rd2), temp2VFiltered);
 
 for i = 1:length(R2)
-       lambdaR2(i) = propagateRUncertainty(temp2VFiltered(i), Rg, Rn, Rp, Rf, Rd); 
+       lambdaR2(i) = propagateRUncertainty(temp2VFiltered(i), Rg2, Rn2, Rp2, Rf2, Rd2); 
 end
 
 % Steinhart-hart method
@@ -228,23 +238,39 @@ for i = 1:length(T2)
        lambdaT2(i) = propagateTUncertainty(B, R0, T0, R2(i), lambdaB, lambdaR0, lambdaR2(i));
 end
 
-figure
-hold on
-plot(t,T1, LineWidth = Width)
-plot(t,T1+lambdaT1', '-.', LineWidth = Width, Color = "#D95319")
-plot(t,T1-lambdaT1', '--', LineWidth = Width, Color = "#EDB120")
+xconf = [t t(end:-1:1)];
+yconf = [T1-lambdaT1' fliplr(T1(end:-1:1)+lambdaT1')];
 
+% figure
+% plot(t,T1, LineWidth = Width)
+% hold on
+% plot(t,T1+lambdaT1', '-.', LineWidth = Width, Color = "#D95319")
+% plot(t,T1-lambdaT1', '--', LineWidth = Width, Color = "#EDB120")
+
+
+figure
+plot(t,T1, LineWidth = Width)
+hold on
+shade(t,T1+lambdaT1','--w', ...
+      t,T1-lambdaT1','--w', ...
+      'FillType', [1 2;2 1], ...
+      'LineWidth',0.01, ...
+      'FillAlpha',0.2, ...
+      'FillColor', [0 0.4470 0.7410])
 title('Converted Temperature Data (°C) vs. Time (s) - Air', FontSize=TitleSize)
 xlabel('Time (s)', FontSize=AxisSize)
 ylabel('Temperature (°C)', FontSize=AxisSize)
-legend('Measured', 'Upper Bound', 'Lower Bound')
+legend('Measured', 'Error Bounds')
 
 figure
 hold on
 plot(t,T2, LineWidth = Width)
-plot(t,T2+lambdaT2', '-.', LineWidth = Width)
-plot(t,T2-lambdaT2', '--', LineWidth = Width)
-
+shade(t,T2+lambdaT2','--w', ...
+      t,T2-lambdaT2','--w', ...
+      'FillType', [1 2;2 1], ...
+      'LineWidth',0.01, ...
+      'FillAlpha',0.2, ...
+      'FillColor', [0 0.4470 0.7410])
 title('Converted Temperature Data (°C) vs. Time (s) - Water', FontSize=TitleSize)
 xlabel('Time (s)', FontSize=AxisSize)
 ylabel('Temperature (°C)', FontSize=AxisSize)
@@ -252,4 +278,4 @@ legend('Measured', 'Upper Bound', 'Lower Bound')
 
 figure
 plot(t,A03, LineWidth = Width)
-title(['Weather Vane'])
+title('Weather Vane')
